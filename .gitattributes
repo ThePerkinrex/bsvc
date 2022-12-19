@@ -1,0 +1,7 @@
+* text eol=lf
+*.gif binary
+*.ps binary
+*.h68 text=auto
+*.win text=auto
+*.dsp text=auto
+*.dsw text=auto
