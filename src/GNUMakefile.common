@@ -127,6 +127,12 @@ clean:
 				$(INSTRUCTION) $(DECODE_TABLE_SIM68000) \
 				$(DECODE_TABLE_SIM68360) $(SCR_M68KDEVICES)
 
+sim68000: $(DECODE_TABLE_SIM68000) $(BIN_SIM68000)
+68kasm: $(BIN_68KASM)
+tools: $(BIN_TOOLS)
+
+build_no_tk: $(BIN_SIM68000) $(BIN_68KASM) $(BIN_TOOLS)
+
 %.scr:	%.tcl
 	sh $(TCL2SCR) $< > $@
 

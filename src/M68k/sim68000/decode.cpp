@@ -11,12 +11,16 @@ m68000::DecodeEntry m68000::ourDecodeTable[] = {
 m68000::ExecutionPointer *m68000::ourDecodeCacheTable = nullptr;
 
 // Decode the given opcode
-m68000::ExecutionPointer m68000::DecodeInstruction(int opcode) {
+m68000::ExecutionPointer m68000::DecodeInstruction(int opcode)
+{
   // Check to see if this opcode needs to be decoded
-  if (ourDecodeCacheTable[opcode] == 0) {
+  if (ourDecodeCacheTable[opcode] == 0)
+  {
     // Decode the opcode using a linear search (slow :-{ )
-    for (size_t s = 0; s < (sizeof(ourDecodeTable) / sizeof(DecodeEntry)); ++s) {
-      if ((opcode & ourDecodeTable[s].mask) == ourDecodeTable[s].signature) {
+    for (size_t s = 0; s < (sizeof(ourDecodeTable) / sizeof(DecodeEntry)); ++s)
+    {
+      if ((opcode & ourDecodeTable[s].mask) == ourDecodeTable[s].signature)
+      {
         ourDecodeCacheTable[opcode] = ourDecodeTable[s].execute;
       }
     }
