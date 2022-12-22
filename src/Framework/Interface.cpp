@@ -1,6 +1,7 @@
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/select.h>
 
 #include <iomanip>
 #include <ios>
@@ -19,15 +20,19 @@
 #include "Framework/Tools.hpp"
 
 // Simulator's main loop: gets a command from the UI, parses and executes it.
-void Interface::CommandLoop() {
+void Interface::CommandLoop()
+{
   myOutputStream << "BSVC Simulator" << std::endl;
-  for (;;) {
+  for (;;)
+  {
     std::string command;
     myOutputStream << "Ready!" << std::endl;
-    do {
+    do
+    {
       std::getline(myInputStream, command);
     } while (command == "NOP");
-    if (command == "Exit") {
+    if (command == "Exit")
+    {
       break;
     }
     // For some version of iostream we have to have a little padding :-(
@@ -37,9 +42,12 @@ void Interface::CommandLoop() {
 }
 
 // Parse and execute the given command
-void Interface::ExecuteCommand(const std::string &command) {
-  for (size_t t = 0; t < myNumberOfCommands; ++t) {
-    if (command.find(ourCommandTable[t].name) == 0) {
+void Interface::ExecuteCommand(const std::string &command)
+{
+  for (size_t t = 0; t < myNumberOfCommands; ++t)
+  {
+    if (command.find(ourCommandTable[t].name) == 0)
+    {
       std::string args = command.substr(ourCommandTable[t].name.length() + 1);
       (this->*ourCommandTable[t].mfp)(args);
       return;
@@ -87,17 +95,20 @@ Interface::Interface(BasicCPU &cpu, BasicDeviceRegistry &registry,
       myBreakpointList(*new BreakpointList) {}
 
 // Prints the value of the program counter.
-void Interface::ProgramCounterValue(const std::string &) {
+void Interface::ProgramCounterValue(const std::string &)
+{
   myOutputStream << std::hex << myCPU.ValueOfProgramCounter() << std::endl;
 }
 
 // Lists the processor's execution trace record.
-void Interface::ListExecutionTraceRecord(const std::string &) {
+void Interface::ListExecutionTraceRecord(const std::string &)
+{
   myOutputStream << myCPU.ExecutionTraceRecord() << std::endl;
 }
 
 // Lists the processor's default execution trace entries to display.
-void Interface::ListDefaultExecutionTraceEntries(const std::string &) {
+void Interface::ListDefaultExecutionTraceEntries(const std::string &)
+{
   myOutputStream << myCPU.DefaultExecutionTraceEntries() << std::endl;
 }
 
@@ -105,9 +116,11 @@ void Interface::ListDefaultExecutionTraceEntries(const std::string &) {
 void Interface::ClearStatistics(const std::string &) { myCPU.ClearStatistics(); }
 
 // Lists the cpu's statistics.
-void Interface::ListStatistics(const std::string &) {
+void Interface::ListStatistics(const std::string &)
+{
   StatisticalInformationList list(myCPU);
-  for (size_t t = 0; t < list.NumberOfElements(); ++t) {
+  for (size_t t = 0; t < list.NumberOfElements(); ++t)
+  {
     StatisticInformation info;
     list.Element(t, info);
     myOutputStream << info.Statistic() << std::endl;
@@ -115,19 +128,22 @@ void Interface::ListStatistics(const std::string &) {
 }
 
 // Lists the CPU's registers.
-void Interface::ListRegisters(const std::string &) {
+void Interface::ListRegisters(const std::string &)
+{
   RegisterInformationList list(myCPU);
   size_t width = 0;
 
   // Find the longest register name.
-  for (size_t k = 0; k < list.NumberOfElements(); ++k) {
+  for (size_t k = 0; k < list.NumberOfElements(); ++k)
+  {
     RegisterInformation info;
     list.Element(k, info);
     width = std::max(width, info.Name().length());
   }
 
   // Send the register list to the user interface.
-  for (size_t k = 0; k < list.NumberOfElements(); ++k) {
+  for (size_t k = 0; k < list.NumberOfElements(); ++k)
+  {
     RegisterInformation info;
     list.Element(k, info);
     myOutputStream << std::setw(width) << std::left << std::setfill(' ')
@@ -136,21 +152,25 @@ void Interface::ListRegisters(const std::string &) {
 }
 
 // Lists a register's description.
-void Interface::ListRegisterDescription(const std::string &args) {
+void Interface::ListRegisterDescription(const std::string &args)
+{
   RegisterInformationList list(myCPU);
   std::istringstream in(args);
   std::string name;
   in >> name;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  for (size_t k = 0; k < list.NumberOfElements(); ++k) {
+  for (size_t k = 0; k < list.NumberOfElements(); ++k)
+  {
     RegisterInformation info;
     list.Element(k, info);
-    if (name == info.Name()) {
+    if (name == info.Name())
+    {
       myOutputStream << info.Description() << std::endl;
       return;
     }
@@ -159,7 +179,8 @@ void Interface::ListRegisterDescription(const std::string &args) {
 }
 
 // Sets one of the cpu's registers to the given value.
-void Interface::SetRegister(const std::string &args) {
+void Interface::SetRegister(const std::string &args)
+{
   std::istringstream in(args);
   RegisterInformationList list(myCPU);
   std::string name;
@@ -169,15 +190,18 @@ void Interface::SetRegister(const std::string &args) {
   in >> name >> value;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  for (size_t k = 0; k < list.NumberOfElements(); ++k) {
+  for (size_t k = 0; k < list.NumberOfElements(); ++k)
+  {
     RegisterInformation info;
 
     list.Element(k, info);
-    if (name == info.Name()) {
+    if (name == info.Name())
+    {
       myCPU.SetRegister(name, value);
       return;
     }
@@ -186,7 +210,8 @@ void Interface::SetRegister(const std::string &args) {
 }
 
 // Lists the value of one of the cpu's registers.
-void Interface::ListRegisterValue(const std::string &args) {
+void Interface::ListRegisterValue(const std::string &args)
+{
   std::istringstream in(args);
   RegisterInformationList list(myCPU);
   std::string name;
@@ -195,15 +220,18 @@ void Interface::ListRegisterValue(const std::string &args) {
   in >> name;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  for (size_t k = 0; k < list.NumberOfElements(); ++k) {
+  for (size_t k = 0; k < list.NumberOfElements(); ++k)
+  {
     RegisterInformation info;
 
     list.Element(k, info);
-    if (name == info.Name()) {
+    if (name == info.Name())
+    {
       myOutputStream << info.HexValue() << std::endl;
       return;
     }
@@ -212,7 +240,8 @@ void Interface::ListRegisterValue(const std::string &args) {
 }
 
 // Detaches a device from the simulator.
-void Interface::DetachDevice(const std::string &args) {
+void Interface::DetachDevice(const std::string &args)
+{
   std::istringstream in(args);
   size_t addressSpace;
   size_t deviceIndex;
@@ -220,21 +249,25 @@ void Interface::DetachDevice(const std::string &args) {
   in >> addressSpace >> deviceIndex;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (myCPU.NumberOfAddressSpaces() <= addressSpace) {
+  if (myCPU.NumberOfAddressSpaces() <= addressSpace)
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
-  if (!myCPU.addressSpace(addressSpace).DetachDevice(deviceIndex)) {
+  if (!myCPU.addressSpace(addressSpace).DetachDevice(deviceIndex))
+  {
     myOutputStream << "ERROR: Couldn't detach device!" << std::endl;
   }
 }
 
 // Attaches a device to the simulator.
-void Interface::AttachDevice(const std::string &args) {
+void Interface::AttachDevice(const std::string &args)
+{
   std::istringstream in(args);
   std::string name;
   std::string deviceArgs;
@@ -244,22 +277,26 @@ void Interface::AttachDevice(const std::string &args) {
   in >> addressSpace >> name >> c;
   in.unsetf(std::ios::skipws);
 
-  if (c != '{') {
+  if (c != '{')
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
   std::getline(in, deviceArgs, '}');
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (addressSpace >= myCPU.NumberOfAddressSpaces()) {
+  if (addressSpace >= myCPU.NumberOfAddressSpaces())
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
 
   BasicDevice *device;
-  if (!myDeviceRegistry.Create(name, deviceArgs, myCPU, device)) {
+  if (!myDeviceRegistry.Create(name, deviceArgs, myCPU, device))
+  {
     myOutputStream << "ERROR: Couldn't create the device!" << std::endl;
     return;
   }
@@ -267,14 +304,16 @@ void Interface::AttachDevice(const std::string &args) {
 }
 
 // Adds a breakpoint.
-void Interface::AddBreakpoint(const std::string &args) {
+void Interface::AddBreakpoint(const std::string &args)
+{
   std::istringstream in(args);
   Address address;
 
   in >> std::hex >> address;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
@@ -282,24 +321,28 @@ void Interface::AddBreakpoint(const std::string &args) {
 }
 
 // Deletes a breakpoint.
-void Interface::DeleteBreakpoint(const std::string &args) {
+void Interface::DeleteBreakpoint(const std::string &args)
+{
   std::istringstream in(args);
   Address address;
 
   in >> std::hex >> address;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (!myBreakpointList.Delete(address)) {
+  if (!myBreakpointList.Delete(address))
+  {
     myOutputStream << "ERROR: Couldn't delete breakpoint!" << std::endl;
   }
 }
 
 // Fills the memory block with the given value.
-void Interface::FillMemoryBlock(const std::string &args) {
+void Interface::FillMemoryBlock(const std::string &args)
+{
   std::istringstream in(args);
   unsigned int addressSpace;
   Address address;
@@ -309,23 +352,28 @@ void Interface::FillMemoryBlock(const std::string &args) {
   in >> addressSpace >> std::hex >> address >> std::hex >> length >> value;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (addressSpace >= myCPU.NumberOfAddressSpaces()) {
+  if (addressSpace >= myCPU.NumberOfAddressSpaces())
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
 
-  if (address > myCPU.addressSpace(addressSpace).MaximumAddress()) {
+  if (address > myCPU.addressSpace(addressSpace).MaximumAddress())
+  {
     myOutputStream << "ERROR: Invalid address!" << std::endl;
     return;
   }
 
-  for (size_t i = 0; i < length; ++i) {
+  for (size_t i = 0; i < length; ++i)
+  {
     Address addr = (address + i) * myCPU.Granularity();
-    for (size_t t = 0; t < myCPU.Granularity(); ++t) {
+    for (size_t t = 0; t < myCPU.Granularity(); ++t)
+    {
       myCPU.addressSpace(addressSpace)
           .Poke(addr + t, StringToInt(std::string(value, t * 2, 2)));
     }
@@ -333,8 +381,10 @@ void Interface::FillMemoryBlock(const std::string &args) {
 }
 
 // Lists breakpoints.
-void Interface::ListBreakpoints(const std::string &) {
-  for (size_t t = 0; t < myBreakpointList.NumberOfBreakpoints(); ++t) {
+void Interface::ListBreakpoints(const std::string &)
+{
+  for (size_t t = 0; t < myBreakpointList.NumberOfBreakpoints(); ++t)
+  {
     Address address = 0;
     myBreakpointList.GetBreakpoint(t, address);
     myOutputStream << IntToString(address, 8) << std::endl;
@@ -342,24 +392,28 @@ void Interface::ListBreakpoints(const std::string &) {
 }
 
 // Lists the devices attached to the simulator.
-void Interface::ListAttachedDevices(const std::string &args) {
+void Interface::ListAttachedDevices(const std::string &args)
+{
   std::istringstream in(args);
   unsigned int addressSpace;
 
   in >> addressSpace;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (addressSpace >= myCPU.NumberOfAddressSpaces()) {
+  if (addressSpace >= myCPU.NumberOfAddressSpaces())
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
 
   size_t n = myCPU.addressSpace(addressSpace).NumberOfAttachedDevices();
-  for (size_t k = 0; k < n; ++k) {
+  for (size_t k = 0; k < n; ++k)
+  {
     AddressSpace::DeviceInformation info;
     myCPU.addressSpace(addressSpace).GetDeviceInformation(k, info);
     myOutputStream << info.name << " {" << info.arguments << "}" << std::endl;
@@ -367,8 +421,10 @@ void Interface::ListAttachedDevices(const std::string &args) {
 }
 
 // Lists devices known to the simulator.
-void Interface::ListDevices(const std::string &) {
-  for (size_t t = 0; t < myDeviceRegistry.NumberOfDevices(); ++t) {
+void Interface::ListDevices(const std::string &)
+{
+  for (size_t t = 0; t < myDeviceRegistry.NumberOfDevices(); ++t)
+  {
     DeviceInformation info;
     myDeviceRegistry.Information(t, info);
     myOutputStream << info.name << std::endl;
@@ -376,21 +432,25 @@ void Interface::ListDevices(const std::string &) {
 }
 
 // Lists the UI script for the named device.
-void Interface::ListDeviceScript(const std::string &args) {
+void Interface::ListDeviceScript(const std::string &args)
+{
   std::istringstream in(args);
   std::string name;
 
   in >> name;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  for (size_t t = 0; t < myDeviceRegistry.NumberOfDevices(); ++t) {
+  for (size_t t = 0; t < myDeviceRegistry.NumberOfDevices(); ++t)
+  {
     DeviceInformation info;
     myDeviceRegistry.Information(t, info);
-    if (name == info.name) {
+    if (name == info.name)
+    {
       myOutputStream << info.script << std::endl;
       return;
     }
@@ -399,7 +459,8 @@ void Interface::ListDeviceScript(const std::string &args) {
 }
 
 // Lists a memory block.
-void Interface::ListMemory(const std::string &args) {
+void Interface::ListMemory(const std::string &args)
+{
   std::istringstream in(args);
   unsigned int addressSpace;
   Address address;
@@ -410,31 +471,41 @@ void Interface::ListMemory(const std::string &args) {
   in >> addressSpace >> std::hex >> address >> length >> wordsPerLine;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (addressSpace >= myCPU.NumberOfAddressSpaces()) {
+  if (addressSpace >= myCPU.NumberOfAddressSpaces())
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
   size_t numberOfWords = 0;
-  for (size_t t = 0; t < length; ++t) {
-    for (size_t s = 0; s < myCPU.Granularity(); ++s) {
+  for (size_t t = 0; t < length; ++t)
+  {
+    for (size_t s = 0; s < myCPU.Granularity(); ++s)
+    {
       Byte value;
       if (myCPU.addressSpace(addressSpace)
-              .Peek((address + t) * myCPU.Granularity() + s, value)) {
+              .Peek((address + t) * myCPU.Granularity() + s, value))
+      {
         line += IntToString(value, 2);
-      } else {
+      }
+      else
+      {
         line += "xx";
       }
     }
     ++numberOfWords;
-    if (numberOfWords >= wordsPerLine) {
+    if (numberOfWords >= wordsPerLine)
+    {
       myOutputStream << line << std::endl;
       numberOfWords = 0;
       line = "";
-    } else {
+    }
+    else
+    {
       line += " ";
     }
   }
@@ -443,21 +514,25 @@ void Interface::ListMemory(const std::string &args) {
 }
 
 // Steps through some number of instructions.
-void Interface::Step(const std::string &args) {
+void Interface::Step(const std::string &args)
+{
   std::istringstream in(args);
   int numberOfSteps;
 
   in >> numberOfSteps;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  for (int t = 0; t < numberOfSteps; ++t) {
+  for (int t = 0; t < numberOfSteps; ++t)
+  {
     std::string traceRecord;
     const std::string &message = myCPU.ExecuteInstruction(traceRecord, true);
-    if (!message.empty()) {
+    if (!message.empty())
+    {
       myOutputStream << "{SimulatorMessage {" << message << "}}" << std::endl;
       break;
     }
@@ -466,12 +541,14 @@ void Interface::Step(const std::string &args) {
 }
 
 // Resets the CPU (which should also reset the devices).
-void Interface::Reset(const std::string &) {
+void Interface::Reset(const std::string &)
+{
   myCPU.Reset();
 }
 
 // Perform the Run command
-void Interface::Run(const std::string &args) {
+void Interface::Run(const std::string &args)
+{
   std::istringstream in(args);
   std::string name;
   char c;
@@ -482,7 +559,8 @@ void Interface::Run(const std::string &args) {
   in >> c;
   in.unsetf(std::ios::skipws);
 
-  if (c != '{') {
+  if (c != '{')
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
@@ -490,22 +568,30 @@ void Interface::Run(const std::string &args) {
   std::getline(in, name, '}');
 
   // Run until something stops us.
-  for (size_t steps = 0;; ++steps) {
+  for (size_t steps = 0;; ++steps)
+  {
     std::string traceRecord;
     const std::string &message = myCPU.ExecuteInstruction(traceRecord, false);
-    if (!message.empty()) {
-      if (message[0] == '.') {
+    if (!message.empty())
+    {
+      if (message[0] == '.')
+      {
         myOutputStream << message.substr(1) << std::flush;
-      } else {
+      }
+      else
+      {
         myOutputStream << "Execution stopped: " << message << std::endl;
         break;
       }
-    } else if (myBreakpointList.Check(myCPU.ValueOfProgramCounter())) {
+    }
+    else if (myBreakpointList.Check(myCPU.ValueOfProgramCounter()))
+    {
       myOutputStream << "Execution stopped at a breakpoint!" << std::endl;
       break;
     }
     // Poll for input every 1024 steps
-    else if ((steps & 0x03FF) == 0) {
+    else if ((steps & 0x03FF) == 0)
+    {
       fd_set rfds;
       struct timeval tv;
       int retval;
@@ -521,7 +607,8 @@ void Interface::Run(const std::string &args) {
       retval = select(1, &rfds, NULL, NULL, &tv);
 
       // Stop running if data is ready to be read
-      if (retval == 1) {
+      if (retval == 1)
+      {
         // Read the "StopRunning" Command
         std::string dummy;
         std::getline(myInputStream, dummy);
@@ -534,18 +621,21 @@ void Interface::Run(const std::string &args) {
 }
 
 // Lists the Maximum Address allow by the give address space.
-void Interface::ListMaximumAddress(const std::string &args) {
+void Interface::ListMaximumAddress(const std::string &args)
+{
   std::istringstream in(args);
   size_t addressSpace;
 
   in >> addressSpace;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (addressSpace >= myCPU.NumberOfAddressSpaces()) {
+  if (addressSpace >= myCPU.NumberOfAddressSpaces())
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
@@ -554,17 +644,20 @@ void Interface::ListMaximumAddress(const std::string &args) {
 }
 
 // Lists the number of address spaces for the CPU.
-void Interface::ListNumberOfAddressSpaces(const std::string &) {
+void Interface::ListNumberOfAddressSpaces(const std::string &)
+{
   myOutputStream << std::dec << myCPU.NumberOfAddressSpaces() << std::endl;
 }
 
 // Lists the granularity of the cpu.
-void Interface::ListGranularity(const std::string &) {
+void Interface::ListGranularity(const std::string &)
+{
   myOutputStream << std::dec << myCPU.Granularity() << std::endl;
 }
 
 // Sets a memory location to the given value.
-void Interface::SetMemory(const std::string &args) {
+void Interface::SetMemory(const std::string &args)
+{
   std::istringstream in(args);
   std::string value;
   size_t addressSpace;
@@ -573,27 +666,32 @@ void Interface::SetMemory(const std::string &args) {
   in >> addressSpace >> std::hex >> address >> value;
 
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
-  if (addressSpace >= myCPU.NumberOfAddressSpaces()) {
+  if (addressSpace >= myCPU.NumberOfAddressSpaces())
+  {
     myOutputStream << "ERROR: Invalid address space!" << std::endl;
     return;
   }
-  if (address > myCPU.addressSpace(addressSpace).MaximumAddress()) {
+  if (address > myCPU.addressSpace(addressSpace).MaximumAddress())
+  {
     myOutputStream << "ERROR: Invalid address!" << std::endl;
     return;
   }
   address *= myCPU.Granularity();
-  for (size_t t = 0; t < myCPU.Granularity(); ++t) {
+  for (size_t t = 0; t < myCPU.Granularity(); ++t)
+  {
     myCPU.addressSpace(addressSpace)
         .Poke(address + t, StringToInt(std::string(value, t * 2, 2)));
   }
 }
 
 // Loads the named program into the address space.
-void Interface::LoadProgram(const std::string &args) {
+void Interface::LoadProgram(const std::string &args)
+{
   std::istringstream in(args);
   size_t addressSpace;
   std::string name;
@@ -602,13 +700,15 @@ void Interface::LoadProgram(const std::string &args) {
   in >> addressSpace >> c;
   in.unsetf(std::ios::skipws);
 
-  if (c != '{') {
+  if (c != '{')
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
   std::getline(in, name, '}');
   // Make sure we were able to read the arguments
-  if (!in) {
+  if (!in)
+  {
     myOutputStream << "ERROR: Invalid arguments!" << std::endl;
     return;
   }
