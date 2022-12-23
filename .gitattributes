@@ -1,6 +1,10 @@
 * text eol=lf
 *.gif binary
 *.ps binary
+*.exe binary
+*.dll binary
+dist/linux/* binary
+dist/cygwin/* binary
 *.h68 text=auto
 *.win text=auto
 *.dsp text=auto
